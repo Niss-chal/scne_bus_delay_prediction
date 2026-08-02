@@ -1,0 +1,4 @@
+service_date,zip_file,error
+2025-12-26,sirivm-20251226T132701.zip,File is not a zip file
+2025-12-26,sirivm-20251226T212431.zip,File is not a zip file
+2025-12-27,sirivm-20251227T120932.zip,File is not a zip file

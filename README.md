@@ -2,40 +2,44 @@
 
 ## Overview
 
-This project predicts stop-level bus arrival delays for Stagecoach North East services using SIRI-VM vehicle-location data and GTFS timetable data.
+This project predicts stop-level bus arrival delay for Stagecoach North East services. It combines SIRI-VM vehicle-location data with GTFS timetable data, processes the data using PySpark, compares regression models, stores the final data in MySQL, and provides predictions through a Streamlit interface.
 
-The data pipeline was developed with PySpark and includes data extraction, cleaning, journey and stop matching, feature engineering, regression modelling, MySQL storage, and a Streamlit prediction interface.
+The project uses data from 26, 27 and 28 December 2025. After cleaning and matching, the final dataset contains **308,885 delay records**.
 
-The project uses data from **26, 27 and 28 December 2025** and produced **308,885 matched delay records**.
-
-## Model Results
+## Main Results
 
 | Model | MAE | RMSE | R² |
 |---|---:|---:|---:|
 | Linear Regression | 93.34 | 149.36 | 0.7110 |
 | Decision Tree | 66.79 | 158.23 | 0.6756 |
-| **Random Forest** | **61.95** | **137.57** | **0.7548** |
+| Random Forest | **61.95** | **137.57** | **0.7548** |
 | Gradient-Boosted Trees | 66.55 | 152.51 | 0.6987 |
 
-Random Forest gave the best overall performance and was used in the Streamlit application.
+Random Forest gave the best overall result and was used in the Streamlit application.
 
 ## Technologies
 
 - Python 3.11
-- PySpark 3.5.8
-- Spark SQL and MLlib
+- PySpark 3.5.8 and Spark SQL
+- PySpark MLlib
 - Pandas and SciPy
 - MySQL and JDBC
 - Streamlit
 - Jupyter Notebook
 - Parquet
 
-## Repository Structure
+## Project Structure
 
 ```text
 .
+├── data/
+│   ├── raw/          # Original SIRI-VM and GTFS files
+│   ├── interim/      # Extracted and filtered daily files
+│   └── processed/    # Delay data and Spark Parquet datasets
 ├── database/
 │   └── scne_bus_delay.sql
+├── drivers/
+│   └── mysql-connector-j-9.7.0.jar
 ├── models/
 │   ├── random_forest_delay_model/
 │   └── route_indexer_model/
@@ -59,7 +63,20 @@ Random Forest gave the best overall performance and was used in the Streamlit ap
 └── README.md
 ```
 
-The large `data/raw`, `data/interim`, and `data/processed` folders are kept locally and excluded from GitHub.
+## Notebook Guide
+
+| Notebook | Purpose |
+|---|---|
+| 01 | Extract multi-day Stagecoach North East SIRI-VM observations |
+| 02 | Extract active GTFS timetable data for each service date |
+| 03 | Clean data, match journeys and stops, and calculate delay |
+| 04 | Combine daily data using PySpark and save it as Parquet |
+| 05 | Run Spark SQL, data profiling and exploratory analysis |
+| 06 | Create machine-learning features and prevent target leakage |
+| 07 | Train and compare four regression models |
+| 08 | Evaluate the final model in detail |
+| 09 | Save the model and prepare inputs for the user interface |
+| 10 | Write Spark DataFrames to MySQL and run a parameterised query |
 
 ## Workflow
 
@@ -72,7 +89,7 @@ Journey and nearest-stop matching
         ↓
 Delay calculation
         ↓
-PySpark processing and analysis
+PySpark integration and analysis
         ↓
 Feature engineering
         ↓
@@ -89,39 +106,48 @@ The prediction target is:
 delay_seconds = observed vehicle time - scheduled arrival time
 ```
 
-## How to Run
+## Running the Project
 
-### 1. Install the main packages
+### Setup
+
+#### 1. Create the environment
+
+```bash
+conda create -n pyspark311 python=3.11
+conda activate pyspark311
+```
+
+#### 2. Install Python packages
 
 ```bash
 pip install pyspark==3.5.8 pandas numpy scipy matplotlib plotly streamlit mysql-connector-python jupyter
 ```
 
-Java, MySQL, and MySQL Connector/J are also required.
+#### 3. Add MySQL Connector/J
 
-### 2. Run the notebooks
-
-Open the `notebooks` folder and run Notebooks `01` to `10` in order.
-
-Update the local data, model, JDBC driver, and database paths where required.
-
-Before running Notebook 10, create the database using:
+Download the platform-independent MySQL Connector/J archive and place the `.jar` file in:
 
 ```text
-database/scne_bus_delay.sql
+drivers/mysql-connector-j-9.7.0.jar
 ```
 
-### 3. Run the Streamlit app
+#### 4. Create the MySQL database
 
-From the project root:
+Run:
 
-```bash
-streamlit run ui/app.py
+```text
+scne_bus_delay.sql
 ```
+
+in MySQL Workbench before running Notebook 10.
+
+#### 5. Configure local paths
+
+The notebooks were developed on Windows and contain local paths. Update the data, model, driver and database paths before running them on another computer.
 
 ## Notes
 
 - The project uses only three Christmas holiday-period dates.
 - Arrival time is estimated from the fresh GPS observation nearest to a stop.
-- Weather, traffic, incidents, roadworks, and passenger demand are not included.
+- Weather, traffic, incidents and passenger demand are not included.
 - The application is an academic demonstration and is not connected to live bus data.
